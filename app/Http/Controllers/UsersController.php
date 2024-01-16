@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 
 class UsersController extends Controller
 {
@@ -35,13 +34,9 @@ class UsersController extends Controller
 			'email' => 'required|unique:users|email',
 			'password' => 'required|min:5|confirmed',
 		]);
-
 		$user = new User();
-		$user->fill([
-			'email' => htmlspecialchars(request()->input('email')),
-			'password' => htmlspecialchars(Hash::make(request()->input('password')))
-		]);
-		$user->save();
+		$user->fill(request()->all())->save();
+
 		return redirect()->to('/users');
 	}
 
@@ -52,24 +47,24 @@ class UsersController extends Controller
 			'employee_id' => 'required|integer'
 		]);
 
+		/**
+		 * @var User $user
+		 */
 		$userId = request()->input('employee_id');
 		$user = User::query()->findOrFail($userId);
 		$user->transactions()->create([
 			'hours' => request()->input('hours'),
-			'price' => $this->getPrice(request()->input('hours'))
+			'price' => $user->calculatePayment(request()->input('hours'))
 		]);
 
-		return redirect()->to("/users/{$userId}");
+		return redirect()->route('users.show', ['id' => $userId]);
 	}
 
 	public function calculation($id)
 	{
 		$user = User::query()->findOrFail($id);
 
-		$salary = $user->transactions()
-			->sPayed()
-			->pluck('price')
-			->sum();
+		$salary = $user->transactions()->sPayed()->sum('price');
 
 		return view('users.calculation', [
 			'user' => $user,
@@ -77,23 +72,16 @@ class UsersController extends Controller
 		]);
 	}
 
-	public function total()
+	public function payOff(): string
 	{
-		$totalPrice = Transaction::query()
-			->sPayed()
-			->sum('price');
 
-		Transaction::query()->update([
-			'payed' => 1
-		]);
+		$totalSum = Transaction::query()->sPayed()->sum('price');
+		Transaction::query()->update(['payed' => 1]);
 
-		return "Выплачено всем сотрудникам: {$totalPrice} рублей. Все транзакции за период завершены.";
+		return $totalSum
+			?
+			"Все транзакции погашены. Сумма выплат за период составила {$totalSum}."
+			:
+			"Транзакций за период не обнаружено.";
 	}
-
-
-	private function getPrice(int $hours): int
-	{
-		return $hours * Transaction::HOUR_PRICE;
-	}
-
 }

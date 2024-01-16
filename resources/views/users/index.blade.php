@@ -45,7 +45,7 @@
 				<div class="col-12 d-flex flex-column justify-content-start align-items-start">
 					<a href="/" class="btn btn-dark mb-3">Назад</a>
 					<a href="{{ route('users.add') }}" class="btn btn-primary mb-3">Добавить сотрудника</a>
-					<a href="{{ route('users.total') }}" class="btn btn-success mb-3">Выплатить зарплату за период</a>
+					<a href="{{ route('users.payoff') }}" class="btn btn-success mb-3">Выплатить зарплату за период</a>
 				</div>
 			</div>
 		</div>

@@ -33,4 +33,14 @@ class User extends Model
 	{
 		return route('users.show', ['id' => $this->id]);
 	}
+
+	public function calculatePayment(int $hours): int
+	{
+		return $hours * Transaction::HOUR_PRICE;
+	}
+
+	public function amount(): int
+	{
+		return $this->transactions()->sPayed()->sum('price');
+	}
 }
