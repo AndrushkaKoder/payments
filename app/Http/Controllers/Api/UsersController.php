@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\UserNotFoundException;
 use App\Http\Controllers\Controller;
-use App\Models\Transaction;
+use App\Http\Traits\Userable;
 use App\Models\User;
 
 class UsersController extends Controller
 {
+	use Userable;
+
 	public function create(): string
 	{
 		request()->validate([
@@ -58,16 +60,6 @@ class UsersController extends Controller
 		return $responseCollect->count() ? $responseCollect->toJson() : null;
 	}
 
-	public function payOff(): string
-	{
-		$totalSum = Transaction::query()->sPayed()->sum('price');
-		Transaction::query()->update(['payed' => 1]);
 
-		return $totalSum
-			?
-			"Все транзакции погашены. Сумма выплат за период составила {$totalSum}."
-			:
-			"Транзакций за период не обнаружено.";
-	}
 
 }
